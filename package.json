@@ -1,14 +1,14 @@
 {
-  "name": "electron-quick-start-typescript",
+  "name": "eui-settingtool",
   "version": "1.0.0",
   "description": "Egret Editor Setting Tool",
   "author": "Willy",
-  "main": "output/main.js",
+  "main": "./output/main.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint -c .eslintrc --ext .ts ./src",
-    "start": "npm run build && electron ./output/main.js",
+    "start": "yarn build && electron ./output/main.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"

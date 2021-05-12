@@ -1,33 +1,28 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" href="index.css">
-    <meta charset="UTF-8" />
-    <title>Hello World!</title>
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-    <meta
-      http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>, Chromium
-    <span id="chrome-version"></span>, and Electron
-    <span id="electron-version"></span>.
-	
-	<h1> Speed Racer</h1>
-    <br>
-    <label class="switch">
-      <input type="checkbox">
-      <span class="slider round"></span>
-    </label>
-		
-    <!-- You can also require other files to run in this process -->
-    <script src="./dist/renderer.js"></script>
-  </body>
+    <head>
+        <link rel="stylesheet" href="index.css" />
+        <meta charset="UTF-8" />
+        <title>Egret Editor Setting Tool</title>
+        <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+        <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+    </head>
+    <body>
+        <!-- You can also require other files to run in this process -->
+        <script src="./output/renderer.js"></script>
+        
+        <fieldset id="gameBlock">
+          <legend>遊戲設定</legend>
+
+        </fieldset>
+        <hr />
+        <fieldset id="themeBlock">
+          <legend>主題設定</legend>
+
+        </fieldset>
+        <br>
+        <button id="SaveBtn" type="button" class="saveButton">Save</button>
+
+    </body>
 </html>
