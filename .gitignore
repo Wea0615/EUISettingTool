@@ -3,3 +3,4 @@ dist
 yarn.lock
 /output
 /yarn.lock
+*.code-workspace

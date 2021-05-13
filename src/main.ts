@@ -1,8 +1,6 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
-
-const fs = require("fs");
-import { ipcMain } from "electron";
+import * as fs from 'fs';
 import { ipcEvent } from "./ipcEvent";
 
 function createWindow() {
@@ -19,19 +17,23 @@ function createWindow() {
 
     // and load the index.html of the app.
     mainWindow.loadFile(path.join(__dirname, "../index.html")).then(() => {
-        mainWindow.webContents.send(ipcEvent.DOMInit);
+        mainWindow.webContents.send(ipcEvent.HTMLLoaded);
 
-        let rawdata = fs.readFileSync(path.resolve(__dirname, "setting.json"));
-        let student = JSON.parse(rawdata);
-        mainWindow.webContents.send(ipcEvent.readGameData, student.Games);
-    });
-
-    ipcMain.on(ipcEvent.saveButton, (event, arg) => {
-        console.log(arg);
+        //讀取遊戲設定
+        let rawdata:any = fs.readFileSync(path.resolve(__dirname, "setting.json"));
+        let gameData = JSON.parse(rawdata);
+        mainWindow.webContents.send(ipcEvent.readGameData, gameData.Games);
     });
 
     // Open the DevTools.
     mainWindow.webContents.openDevTools();
+}
+
+function initEvents() {
+    //儲存按鈕
+    ipcMain.on(ipcEvent.saveButton, (event, arg) => {
+        console.info(arg);
+    });
 }
 
 // This method will be called when Electron has finished
@@ -39,6 +41,7 @@ function createWindow() {
 // Some APIs can only be used after this event occurs.
 app.on("ready", () => {
     createWindow();
+    initEvents();
 
     app.on("activate", function () {
         // On macOS it's common to re-create a window in the app when the
@@ -55,6 +58,3 @@ app.on("window-all-closed", () => {
         app.quit();
     }
 });
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
