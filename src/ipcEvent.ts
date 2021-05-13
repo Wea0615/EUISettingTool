@@ -1,5 +1,5 @@
 export const enum ipcEvent {
     HTMLLoaded = "htmlLoader",
-    readGameData = "game-data",
+    readSettingData = "settingData",
     saveButton = "saveData",
 }

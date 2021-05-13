@@ -1,4 +1,4 @@
-class GameDataHandler extends DataHandlerBase {
+class ThemeDataHandler extends DataHandlerBase {
     public constructor() {
         super();
     }

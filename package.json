@@ -10,7 +10,7 @@
     "lint": "eslint -c .eslintrc --ext .ts ./src",
     "start": "yarn build && electron ./output/main.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "dist": "yarn build && electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
   "repository": "https://github.com/Wea0615/EUISettingTool",

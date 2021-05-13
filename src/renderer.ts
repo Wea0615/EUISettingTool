@@ -5,21 +5,25 @@
 // Use preload.js to selectively enable features
 // needed in the renderer process.
 
-import { ipcRenderer } from 'electron';
+import { ipcRenderer } from "electron";
 import { ipcEvent } from "./ipcEvent";
 
 let gameDataHandler = new GameDataHandler();
+let themeDataHandler = new ThemeDataHandler();
 
 ipcRenderer.on(ipcEvent.HTMLLoaded, function (event, data) {
-    gameDataHandler.init(document);
-    
+    gameDataHandler.init(document, "gameBlock");
+    themeDataHandler.init(document, "themeBlock");
+
     let saveBtn = document.getElementById("SaveBtn");
     saveBtn.addEventListener("click", function () {
-        let allActiveGames = gameDataHandler.getAllActiveGames();
-        ipcRenderer.send(ipcEvent.saveButton, allActiveGames);
+        let allActiveGames = gameDataHandler.getAllActiveOptions();
+        let allActiveThemes = themeDataHandler.getAllActiveOptions();
+        ipcRenderer.send(ipcEvent.saveButton, allActiveGames, allActiveThemes);
     });
 });
 
-ipcRenderer.on(ipcEvent.readGameData, function (event, data) {
-    gameDataHandler.createGameBtn(data);
+ipcRenderer.on(ipcEvent.readSettingData, function (event, ...data) {
+    gameDataHandler.createOptions(data[0]);
+    themeDataHandler.createOptions(data[1]);
 });

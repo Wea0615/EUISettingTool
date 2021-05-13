@@ -1,7 +1,11 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
-import * as fs from 'fs';
+import * as fs from "fs";
 import { ipcEvent } from "./ipcEvent";
+
+let egretSetting: any;
+let wingSetting: any;
+let isInitOK: boolean = false;
 
 function createWindow() {
     // Create the browser window.
@@ -11,7 +15,7 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: true, // for renderer import
-            contextIsolation: false,
+            contextIsolation: false
         }
     });
 
@@ -19,20 +23,69 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, "../index.html")).then(() => {
         mainWindow.webContents.send(ipcEvent.HTMLLoaded);
 
+        if (!fs.existsSync(path.resolve("./setting.json"))) {
+            const options = {
+                type: "error",
+                title: "Error",
+                message: "找不到遊戲設定檔!!",
+            };
+            dialog.showMessageBox(null, options);
+            return;
+        }
+
+        isInitOK = true;
         //讀取遊戲設定
-        let rawdata:any = fs.readFileSync(path.resolve(__dirname, "setting.json"));
+        let rawdata: any = fs.readFileSync(path.resolve("./setting.json"));
         let gameData = JSON.parse(rawdata);
-        mainWindow.webContents.send(ipcEvent.readGameData, gameData.Games);
+        mainWindow.webContents.send(ipcEvent.readSettingData, gameData.Games, gameData.Themes);
+
+        let egretRawData: any = fs.readFileSync(path.resolve("./egretProperties.json"));
+        egretSetting = JSON.parse(egretRawData);
+        //console.info(egretSetting.eui.exmlRoot);
+
+        let wingRawData: any = fs.readFileSync(path.resolve("./wingProperties.json"));
+        wingSetting = JSON.parse(wingRawData);
     });
 
     // Open the DevTools.
-    mainWindow.webContents.openDevTools();
+    //mainWindow.webContents.openDevTools();
 }
 
 function initEvents() {
     //儲存按鈕
-    ipcMain.on(ipcEvent.saveButton, (event, arg) => {
-        console.info(arg);
+    ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
+        if (!isInitOK)
+            return;
+
+        egretSetting.eui.exmlRoot.length = 0;
+        let activeGames = arg[0];
+        for (let game of activeGames) {
+            let gameSkin = `Games/${game}/resource/skins`;
+            egretSetting.eui.exmlRoot.push(gameSkin);
+        }
+
+        let egretData = JSON.stringify(egretSetting, null, 2); //保留空白
+        fs.writeFileSync(path.resolve("./egretProperties.json"), egretData);
+
+        let index = 0;
+        let gameConfig = [];
+        let allConfig = wingSetting.resourcePlugin.configs;
+        for (let config of allConfig) {
+            let path = String(config.configPath);
+            if (path.indexOf("Games") > 0) {
+                //removeIndex.push(index);
+                wingSetting.resourcePlugin.configs.splice(index, 1);
+            }
+            ++index;
+        }
+
+        let activeThemes = arg[1];
+        for (let theme of activeThemes) {
+            let newConfig = { configPath: `resource/${theme}.res.json`, relativePath: `resource/` };
+            wingSetting.resourcePlugin.configs.push(newConfig);
+        }
+        let wingData = JSON.stringify(wingSetting, null, 2); //保留空白
+        fs.writeFileSync(path.resolve("./wingProperties.json"), wingData);
     });
 }
 
