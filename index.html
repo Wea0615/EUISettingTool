@@ -4,27 +4,32 @@
         <link rel="stylesheet" href="index.css" />
         <meta charset="UTF-8" />
         <title>Egret Editor Setting Tool</title>
-        <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
         <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
     </head>
     <body>
         <!-- You can also require other files to run in this process -->
+        <script src="./output/DragHandler.js"></script>
         <script src="./output/DataHandlerBase.js"></script>
         <script src="./output/GameDataHandler.js"></script>
         <script src="./output/ThemeDataHandler.js"></script>
         <script src="./output/renderer.js"></script>
-        
-        <fieldset id="gameBlock">
-          <legend>遊戲設定</legend>
 
-        </fieldset>
-        <hr />
-        <fieldset id="themeBlock">
-          <legend>主題設定</legend>
-
-        </fieldset>
+        <div id="file">
+          drag egretProperties file to here.
+        </div>
         <br>
-        <button id="SaveBtn" type="button" class="saveButton">Save</button>
+        <div id="setting" style="display:none">
+          <fieldset id="gameBlock">
+            <legend>遊戲設定</legend>
+  
+          </fieldset>
+          <hr />
+          <fieldset id="themeBlock">
+            <legend>主題設定</legend>
+  
+          </fieldset>
+          <br>
+          <button id="SaveBtn" type="button" class="saveButton">Save</button>
+        </div>
     </body>
 </html>

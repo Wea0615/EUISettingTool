@@ -1,12 +1,10 @@
 class DataHandlerBase {
     protected myDoc: Document;
-    protected myDatas: any;
+    protected myDatas: any[];
     protected myBlock: HTMLFieldSetElement = null;
     protected dataType: string;
-    
-    public constructor() {
-        
-    }
+
+    public constructor() {}
 
     public init(doc: Document, type: string): void {
         this.myDoc = doc;
@@ -26,7 +24,7 @@ class DataHandlerBase {
         selectInput.type = "checkbox";
         selectInput.id = this.dataType + "selectAll";
         selectInput.checked = true;
-        selectInput.addEventListener("change" , (event) => {
+        selectInput.addEventListener("change", (event) => {
             let selectAll = event.target as HTMLInputElement;
             this.toggleSelection(selectAll.checked);
         });
@@ -41,7 +39,7 @@ class DataHandlerBase {
         selectDiv.appendChild(selectTitle);
     }
 
-    public createOptions(data: any): void {
+    public createOptions(data: any[]): void {
         this.createSelectAll();
 
         this.myDatas = data;
@@ -60,23 +58,30 @@ class DataHandlerBase {
     }
 
     private toggleSelection(isActive: boolean): void {
-        let allCheckBox = this.myBlock.querySelectorAll("input");
-        allCheckBox.forEach((checkNode) => {
+        let checkBoxNode = this.myBlock.querySelectorAll("input");
+        let allCheckBox = Array.apply(null, checkBoxNode);
+
+        for (let checkNode of allCheckBox) {
+            if (checkNode.id.indexOf("selectAll") > 0) continue;
+
             checkNode.checked = isActive;
-        });
+        }
     }
 
-    public getAllActiveOptions(): string[] {
-        let selected: string[] = [];
-        let allCheckBox = this.myBlock.querySelectorAll("input");
-    
-        allCheckBox.forEach((checkNode) => {
+    public getAllActiveOptions(): any[] {
+        let selected: any[] = [];
+        let checkBoxNode = this.myBlock.querySelectorAll("input");
+        let allCheckBox = Array.apply(null, checkBoxNode);
+
+        for (let checkNode of allCheckBox) {
+            if (checkNode.id.indexOf("selectAll") > 0) continue;
+
             if (checkNode.checked) {
-                selected.push(checkNode.id);
-                //console.info(`Checked: ${checkNode.id}`);
+                let selectData = this.myDatas.find((x) => x.id == checkNode.id);
+                selected.push(selectData);
             }
-        });
-    
+        }
+
         return selected;
     }
 

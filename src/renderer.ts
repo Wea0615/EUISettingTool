@@ -10,8 +10,15 @@ import { ipcEvent } from "./ipcEvent";
 
 let gameDataHandler = new GameDataHandler();
 let themeDataHandler = new ThemeDataHandler();
+let dragHandler = new DragHandler();
 
 ipcRenderer.on(ipcEvent.HTMLLoaded, function (event, data) {
+    dragHandler.init(document, (rootPath: string) => {
+        let settingDiv:HTMLDivElement = document.getElementById("setting") as HTMLDivElement;
+        settingDiv.style.display = "block";
+
+        ipcRenderer.send(ipcEvent.egretData, rootPath);
+    });
     gameDataHandler.init(document, "game");
     themeDataHandler.init(document, "theme");
 

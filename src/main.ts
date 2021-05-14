@@ -5,7 +5,7 @@ import { ipcEvent } from "./ipcEvent";
 
 let egretSetting: any;
 let wingSetting: any;
-let isInitOK: boolean = false;
+let rootPath: string;
 
 function createWindow() {
     // Create the browser window.
@@ -28,18 +28,10 @@ function createWindow() {
             return;
         }
 
-        isInitOK = true;
         //讀取遊戲設定
         let rawdata: any = fs.readFileSync(path.resolve("./setting.json"));
         let gameData = JSON.parse(rawdata);
         mainWindow.webContents.send(ipcEvent.readSettingData, gameData.Games, gameData.Themes);
-
-        let egretRawData: any = fs.readFileSync(path.resolve("./egretProperties.json"));
-        egretSetting = JSON.parse(egretRawData);
-        //console.info(egretSetting.eui.exmlRoot);
-
-        let wingRawData: any = fs.readFileSync(path.resolve("./wingProperties.json"));
-        wingSetting = JSON.parse(wingRawData);
     });
 
     // Open the DevTools.
@@ -49,38 +41,44 @@ function createWindow() {
 function initEvents() {
     //儲存按鈕
     ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
-        if (!isInitOK)
-            return;
-
         egretSetting.eui.exmlRoot.length = 0;
         let activeGames = arg[0];
         for (let game of activeGames) {
-            let gameSkin = `Games/${game}/resource/skins`;
+            let gameSkin = `Games/${game.id}/resource/skins`;
             egretSetting.eui.exmlRoot.push(gameSkin);
         }
 
         let egretData = JSON.stringify(egretSetting, null, 2); //保留空白
-        fs.writeFileSync(path.resolve("./egretProperties.json"), egretData);
+        fs.writeFileSync(path.join(rootPath, "./egretProperties.json"), egretData);
 
-        let index = 0;
-        let gameConfig = [];
-        let allConfig = wingSetting.resourcePlugin.configs;
-        for (let config of allConfig) {
-            let path = String(config.configPath);
-            if (path.indexOf("Games") > 0) {
-                //removeIndex.push(index);
-                wingSetting.resourcePlugin.configs.splice(index, 1);
-            }
-            ++index;
-        }
-
+        wingSetting.resourcePlugin.configs.length = 0;
         let activeThemes = arg[1];
         for (let theme of activeThemes) {
-            let newConfig = { configPath: `resource/${theme}.res.json`, relativePath: `resource/` };
-            wingSetting.resourcePlugin.configs.push(newConfig);
+            let newThemeconfig = { configPath: `resource/${theme.id}.res.json`, relativePath: `resource/` };
+            wingSetting.resourcePlugin.configs.push(newThemeconfig);
+        }
+        for (let game of activeGames) {
+            let gameResId = String(game.resId);
+            if (gameResId && gameResId.length > 0) {
+                let newGameConfig = {
+                    configPath: `Game/${game.id}/resource/${gameResId}.res.json`,
+                    relativePath: `Game/${game.id}/resource/`
+                };
+                wingSetting.resourcePlugin.configs.push(newGameConfig);
+            }
         }
         let wingData = JSON.stringify(wingSetting, null, 2); //保留空白
-        fs.writeFileSync(path.resolve("./wingProperties.json"), wingData);
+        fs.writeFileSync(path.join(rootPath, "./wingProperties.json"), wingData);
+    });
+
+    ipcMain.on(ipcEvent.egretData, (event, arg) => {
+        rootPath = arg;
+        let egretRawData: any = fs.readFileSync(path.join(rootPath, "./egretProperties.json"));
+        egretSetting = JSON.parse(egretRawData);
+        console.info(egretSetting.eui.exmlRoot);
+
+        let wingRawData: any = fs.readFileSync(path.join(rootPath, "./wingProperties.json"));
+        wingSetting = JSON.parse(wingRawData);
     });
 }
 

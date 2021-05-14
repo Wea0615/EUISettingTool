@@ -1,3 +1,14 @@
+#file {
+  background-color: #555555;
+  color: white;
+  text-align: center;
+  width: 100%;
+  height: 100px;
+  line-height: 100px;
+  border-style: dashed;
+  box-sizing: border-box;
+}
+
 /* The switch - the box around the slider */
 .switch {
   position: relative;
