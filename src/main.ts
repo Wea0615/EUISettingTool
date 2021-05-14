@@ -1,17 +1,19 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, BrowserView } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { ipcEvent } from "./ipcEvent";
 
+let gameSetting: { id: string, resId: string, name: string }[];
 let egretSetting: any;
 let wingSetting: any;
 let rootPath: string;
+let mainWindow: BrowserWindow;
 
 function createWindow() {
     // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 800,
-        height: 600,
+        height: 700,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: true, // for renderer import
@@ -22,16 +24,6 @@ function createWindow() {
     // and load the index.html of the app.
     mainWindow.loadFile(path.join(__dirname, "../index.html")).then(() => {
         mainWindow.webContents.send(ipcEvent.HTMLLoaded);
-
-        if (!fs.existsSync(path.resolve("./setting.json"))) {
-            dialog.showErrorBox("無法執行", "找不到遊戲設定檔!!");
-            return;
-        }
-
-        //讀取遊戲設定
-        let rawdata: any = fs.readFileSync(path.resolve("./setting.json"));
-        let gameData = JSON.parse(rawdata);
-        mainWindow.webContents.send(ipcEvent.readSettingData, gameData.Games, gameData.Themes);
     });
 
     // Open the DevTools.
@@ -39,6 +31,18 @@ function createWindow() {
 }
 
 function initEvents() {
+    //接收到egret資料路徑
+    ipcMain.on(ipcEvent.egretData, (event, arg) => {
+        rootPath = arg;
+        readGameSetting();
+        
+        let egretRawData: any = fs.readFileSync(path.join(rootPath, "./egretProperties.json"));
+        egretSetting = JSON.parse(egretRawData);
+
+        let wingRawData: any = fs.readFileSync(path.join(rootPath, "./wingProperties.json"));
+        wingSetting = JSON.parse(wingRawData);
+    });
+
     //儲存按鈕
     ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
         egretSetting.eui.exmlRoot.length = 0;
@@ -70,16 +74,37 @@ function initEvents() {
         let wingData = JSON.stringify(wingSetting, null, 2); //保留空白
         fs.writeFileSync(path.join(rootPath, "./wingProperties.json"), wingData);
     });
+}
 
-    ipcMain.on(ipcEvent.egretData, (event, arg) => {
-        rootPath = arg;
-        let egretRawData: any = fs.readFileSync(path.join(rootPath, "./egretProperties.json"));
-        egretSetting = JSON.parse(egretRawData);
-        console.info(egretSetting.eui.exmlRoot);
+function readGameSetting() {
+    gameSetting = [];
 
-        let wingRawData: any = fs.readFileSync(path.join(rootPath, "./wingProperties.json"));
-        wingSetting = JSON.parse(wingRawData);
+    const isDirectory = (source: string) => fs.lstatSync(source).isDirectory();
+    const getDirectories = (source: string) =>
+        fs.readdirSync(source).map(name => path.join(source, name)).filter(isDirectory);
+
+    let gameFolders = getDirectories(path.join(rootPath, "/Games"));
+    gameFolders.forEach((folderPath) => {   
+        let gameResId = "";
+        let gameFolder = folderPath.split(path.sep).pop();
+        let gameName = "遊戲" + gameFolder;
+
+        let setting = { id: gameFolder, resId: gameResId, name: gameName };
+        gameSetting.push(setting);
+
+        fs.readdirSync(path.join(rootPath, `/Games/${gameFolder}/resource`)).forEach(file => {
+            if (file.indexOf("res.json") > 0) {
+                gameResId = file.replace(".res.json", "");
+                let setting = gameSetting.find((x) => x.id == gameFolder);
+                setting.resId = gameResId;
+            }
+        });
     });
+
+    //TODO theme資料由 thm.json判斷
+    let rawdata: any = fs.readFileSync(path.resolve("./setting.json"));
+    let gameData = JSON.parse(rawdata);
+    mainWindow.webContents.send(ipcEvent.readSettingData, gameSetting, gameData.Themes);
 }
 
 // This method will be called when Electron has finished
