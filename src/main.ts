@@ -24,12 +24,7 @@ function createWindow() {
         mainWindow.webContents.send(ipcEvent.HTMLLoaded);
 
         if (!fs.existsSync(path.resolve("./setting.json"))) {
-            const options = {
-                type: "error",
-                title: "Error",
-                message: "找不到遊戲設定檔!!",
-            };
-            dialog.showMessageBox(null, options);
+            dialog.showErrorBox("無法執行", "找不到遊戲設定檔!!");
             return;
         }
 

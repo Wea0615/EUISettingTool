@@ -12,8 +12,8 @@ let gameDataHandler = new GameDataHandler();
 let themeDataHandler = new ThemeDataHandler();
 
 ipcRenderer.on(ipcEvent.HTMLLoaded, function (event, data) {
-    gameDataHandler.init(document, "gameBlock");
-    themeDataHandler.init(document, "themeBlock");
+    gameDataHandler.init(document, "game");
+    themeDataHandler.init(document, "theme");
 
     let saveBtn = document.getElementById("SaveBtn");
     saveBtn.addEventListener("click", function () {

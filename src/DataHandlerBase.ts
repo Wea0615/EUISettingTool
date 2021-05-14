@@ -2,19 +2,48 @@ class DataHandlerBase {
     protected myDoc: Document;
     protected myDatas: any;
     protected myBlock: HTMLFieldSetElement = null;
-    protected blockName: string;
-
+    protected dataType: string;
+    
     public constructor() {
         
     }
 
-    public init(doc: Document, block: string): void {
+    public init(doc: Document, type: string): void {
         this.myDoc = doc;
-        this.blockName = block;
-        this.myBlock = this.myDoc.getElementById(this.blockName) as HTMLFieldSetElement;
+        this.dataType = type;
+        this.myBlock = this.myDoc.getElementById(this.dataType + "Block") as HTMLFieldSetElement;
+    }
+
+    private createSelectAll(): void {
+        let selectDiv = this.myDoc.createElement("div");
+        this.myBlock.appendChild(selectDiv);
+
+        let selectLabel = this.myDoc.createElement("label");
+        selectLabel.className = "switch";
+        selectDiv.appendChild(selectLabel);
+
+        let selectInput = this.myDoc.createElement("input");
+        selectInput.type = "checkbox";
+        selectInput.id = this.dataType + "selectAll";
+        selectInput.checked = true;
+        selectInput.addEventListener("change" , (event) => {
+            let selectAll = event.target as HTMLInputElement;
+            this.toggleSelection(selectAll.checked);
+        });
+        selectLabel.appendChild(selectInput);
+
+        let srSpan = this.myDoc.createElement("span");
+        srSpan.className = "slider";
+        selectLabel.appendChild(srSpan);
+
+        let selectTitle = this.myDoc.createElement("label");
+        selectTitle.textContent = "全選";
+        selectDiv.appendChild(selectTitle);
     }
 
     public createOptions(data: any): void {
+        this.createSelectAll();
+
         this.myDatas = data;
         const optionColumn = 3;
         let colCount = 0;
@@ -28,6 +57,13 @@ class DataHandlerBase {
             ++colCount;
             this.generateBtn(optionDiv, option);
         }
+    }
+
+    private toggleSelection(isActive: boolean): void {
+        let allCheckBox = this.myBlock.querySelectorAll("input");
+        allCheckBox.forEach((checkNode) => {
+            checkNode.checked = isActive;
+        });
     }
 
     public getAllActiveOptions(): string[] {
