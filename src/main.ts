@@ -14,7 +14,9 @@ function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 800,
-        height: 800,
+        height: 150,
+        center: true,
+        useContentSize: true,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: true, // for renderer import
@@ -45,10 +47,14 @@ function initEvents() {
         readGameSetting();
         readThemeSetting();
         mainWindow.webContents.send(ipcEvent.readSettingData, gameSetting, themeSetting);
+
+        mainWindow.setSize(800, 750);
+        mainWindow.center();
     });
 
     //儲存按鈕
     ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
+        //儲存egretProperties
         egretSetting.eui.exmlRoot.length = 0;
         let defaultSkin = "resource/skins";
         egretSetting.eui.exmlRoot.push(defaultSkin);
@@ -62,6 +68,7 @@ function initEvents() {
         let egretData = JSON.stringify(egretSetting, null, 2); //保留空白
         fs.writeFileSync(path.join(rootPath, "./egretProperties.json"), egretData);
 
+        //儲存wingProperties
         wingSetting.resourcePlugin.configs.length = 0;
         let activeThemes = arg[1];
         for (let theme of activeThemes) {
