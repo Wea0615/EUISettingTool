@@ -3,7 +3,8 @@ import * as path from "path";
 import * as fs from "fs";
 import { ipcEvent } from "./ipcEvent";
 
-let gameSetting: { id: string, resId: string, name: string }[];
+let gameSetting: { id: string; resId: string; name: string }[];
+let themeSetting: { id: string; name: string }[];
 let egretSetting: any;
 let wingSetting: any;
 let rootPath: string;
@@ -13,7 +14,7 @@ function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 800,
-        height: 700,
+        height: 800,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: true, // for renderer import
@@ -34,18 +35,24 @@ function initEvents() {
     //接收到egret資料路徑
     ipcMain.on(ipcEvent.egretData, (event, arg) => {
         rootPath = arg;
-        readGameSetting();
         
         let egretRawData: any = fs.readFileSync(path.join(rootPath, "./egretProperties.json"));
         egretSetting = JSON.parse(egretRawData);
 
         let wingRawData: any = fs.readFileSync(path.join(rootPath, "./wingProperties.json"));
         wingSetting = JSON.parse(wingRawData);
+
+        readGameSetting();
+        readThemeSetting();
+        mainWindow.webContents.send(ipcEvent.readSettingData, gameSetting, themeSetting);
     });
 
     //儲存按鈕
     ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
         egretSetting.eui.exmlRoot.length = 0;
+        let defaultSkin = "resource/skins";
+        egretSetting.eui.exmlRoot.push(defaultSkin);
+
         let activeGames = arg[0];
         for (let game of activeGames) {
             let gameSkin = `Games/${game.id}/resource/skins`;
@@ -65,8 +72,8 @@ function initEvents() {
             let gameResId = String(game.resId);
             if (gameResId && gameResId.length > 0) {
                 let newGameConfig = {
-                    configPath: `Game/${game.id}/resource/${gameResId}.res.json`,
-                    relativePath: `Game/${game.id}/resource/`
+                    configPath: `Games/${game.id}/resource/${gameResId}.res.json`,
+                    relativePath: `Games/${game.id}/resource/`
                 };
                 wingSetting.resourcePlugin.configs.push(newGameConfig);
             }
@@ -77,22 +84,28 @@ function initEvents() {
 }
 
 function readGameSetting() {
-    gameSetting = [];
+    if (!fs.existsSync(path.join(rootPath, "/Games"))) {
+        return;
+    }
 
+    gameSetting = [];
     const isDirectory = (source: string) => fs.lstatSync(source).isDirectory();
     const getDirectories = (source: string) =>
-        fs.readdirSync(source).map(name => path.join(source, name)).filter(isDirectory);
+        fs
+            .readdirSync(source)
+            .map((name) => path.join(source, name))
+            .filter(isDirectory);
 
     let gameFolders = getDirectories(path.join(rootPath, "/Games"));
-    gameFolders.forEach((folderPath) => {   
+    gameFolders.forEach((folderPath) => {
         let gameResId = "";
         let gameFolder = folderPath.split(path.sep).pop();
-        let gameName = "遊戲" + gameFolder;
+        let gameName = gameFolder;
 
         let setting = { id: gameFolder, resId: gameResId, name: gameName };
         gameSetting.push(setting);
 
-        fs.readdirSync(path.join(rootPath, `/Games/${gameFolder}/resource`)).forEach(file => {
+        fs.readdirSync(path.join(rootPath, `/Games/${gameFolder}/resource`)).forEach((file) => {
             if (file.indexOf("res.json") > 0) {
                 gameResId = file.replace(".res.json", "");
                 let setting = gameSetting.find((x) => x.id == gameFolder);
@@ -100,11 +113,23 @@ function readGameSetting() {
             }
         });
     });
+}
 
-    //TODO theme資料由 thm.json判斷
-    let rawdata: any = fs.readFileSync(path.resolve("./setting.json"));
-    let gameData = JSON.parse(rawdata);
-    mainWindow.webContents.send(ipcEvent.readSettingData, gameSetting, gameData.Themes);
+function readThemeSetting() {
+    if (!fs.existsSync(path.join(rootPath, "/resource"))) {
+        dialog.showErrorBox("無法執行", "非合法的Egret資料夾結構!!");
+        return;
+    }
+
+    themeSetting = [];
+    //theme資料由 thm.json判斷
+    fs.readdirSync(path.join(rootPath, `/resource`)).forEach((file) => {
+        if (file.indexOf("thm.json") > 0) {
+            let themeId = file.replace(".thm.json", "");
+            let thmSetting = { id: themeId, name: themeId };
+            themeSetting.push(thmSetting);
+        }
+    });    
 }
 
 // This method will be called when Electron has finished
