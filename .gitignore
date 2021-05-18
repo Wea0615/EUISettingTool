@@ -7,3 +7,4 @@ yarn.lock
 egretProperties.json
 wingProperties.json
 setting.json
+.vscode
