@@ -97,3 +97,26 @@ input:checked + .slider:before {
   box-shadow: 0 5px #666;
   transform: translateY(4px);
 }
+
+.resetButton {
+  display: inline-block;
+  padding: 15px 25px;
+  font-size: 24px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #198abe;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px #999;
+}
+
+.resetButton:hover {background-color: #08607a}
+
+.resetButton:active {
+  background-color: #08607a;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}

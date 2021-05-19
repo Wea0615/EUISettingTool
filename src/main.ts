@@ -1,10 +1,12 @@
-import { app, BrowserWindow, ipcMain, dialog, BrowserView } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { ipcEvent } from "./ipcEvent";
 
 let gameSetting: { id: string; resId: string; name: string }[];
 let themeSetting: { id: string; name: string }[];
+let egretRawData: any;
+let wingRawData: any;
 let egretSetting: any;
 let wingSetting: any;
 let rootPath: string;
@@ -37,11 +39,11 @@ function initEvents() {
     //接收到egret資料路徑
     ipcMain.on(ipcEvent.egretData, (event, arg) => {
         rootPath = arg;
-        
-        let egretRawData: any = fs.readFileSync(path.join(rootPath, "./egretProperties.json"));
+
+        egretRawData = fs.readFileSync(path.join(rootPath, "./egretProperties.json"));
         egretSetting = JSON.parse(egretRawData);
 
-        let wingRawData: any = fs.readFileSync(path.join(rootPath, "./wingProperties.json"));
+        wingRawData = fs.readFileSync(path.join(rootPath, "./wingProperties.json"));
         wingSetting = JSON.parse(wingRawData);
 
         readGameSetting();
@@ -52,17 +54,28 @@ function initEvents() {
         mainWindow.center();
     });
 
-    //儲存按鈕
+    initSaveBtn();
+    initResetBtn();
+}
+
+/** 儲存按鈕 */
+function initSaveBtn() {
     ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
+        let activeGames = arg[0];
+        let activeThemes = arg[1];
+
         //儲存egretProperties
         egretSetting.eui.exmlRoot.length = 0;
-        let defaultSkin = "resource/skins";
-        egretSetting.eui.exmlRoot.push(defaultSkin);
 
-        let activeGames = arg[0];
+        for (let theme of activeThemes) {
+            let defaultSkin = `resource/skins/${theme.id}/`;
+            egretSetting.eui.exmlRoot.push(defaultSkin);
+        }
         for (let game of activeGames) {
-            let gameSkin = `Games/${game.id}/resource/skins`;
-            egretSetting.eui.exmlRoot.push(gameSkin);
+            for (let theme of activeThemes) {
+                let gameSkin = `Games/${game.id}/resource/skins/${theme.id}/`;
+                egretSetting.eui.exmlRoot.push(gameSkin);
+            }
         }
 
         let egretData = JSON.stringify(egretSetting, null, 2); //保留空白
@@ -70,7 +83,6 @@ function initEvents() {
 
         //儲存wingProperties
         wingSetting.resourcePlugin.configs.length = 0;
-        let activeThemes = arg[1];
         for (let theme of activeThemes) {
             let newThemeconfig = { configPath: `resource/${theme.id}.res.json`, relativePath: `resource/` };
             wingSetting.resourcePlugin.configs.push(newThemeconfig);
@@ -90,18 +102,29 @@ function initEvents() {
     });
 }
 
+/** 重置按鈕 */
+function initResetBtn() {
+    ipcMain.on(ipcEvent.resetButton, (event, arg) => {
+        //重置egretProperties和wingProperties
+        fs.writeFileSync(path.join(rootPath, "./egretProperties.json"), egretRawData);
+        fs.writeFileSync(path.join(rootPath, "./wingProperties.json"), wingRawData);
+    });
+}
+
 function readGameSetting() {
     if (!fs.existsSync(path.join(rootPath, "/Games"))) {
         return;
     }
 
     gameSetting = [];
-    const isDirectory = (source: string) => fs.lstatSync(source).isDirectory();
-    const getDirectories = (source: string) =>
-        fs
-            .readdirSync(source)
+    const isDirectory = (source: string) => {
+        return fs.lstatSync(source).isDirectory();
+    }
+    const getDirectories = (source: string) => {
+        return fs.readdirSync(source)
             .map((name) => path.join(source, name))
             .filter(isDirectory);
+    };
 
     let gameFolders = getDirectories(path.join(rootPath, "/Games"));
     gameFolders.forEach((folderPath) => {
@@ -136,7 +159,7 @@ function readThemeSetting() {
             let thmSetting = { id: themeId, name: themeId };
             themeSetting.push(thmSetting);
         }
-    });    
+    });
 }
 
 // This method will be called when Electron has finished

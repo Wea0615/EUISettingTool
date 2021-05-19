@@ -28,6 +28,11 @@ ipcRenderer.on(ipcEvent.HTMLLoaded, function (event, data) {
         let allActiveThemes = themeDataHandler.getAllActiveOptions();
         ipcRenderer.send(ipcEvent.saveButton, allActiveGames, allActiveThemes);
     });
+
+    let resetBtn = document.getElementById("ResetBtn");
+    resetBtn.addEventListener("click", function () {
+        ipcRenderer.send(ipcEvent.resetButton);
+    });
 });
 
 ipcRenderer.on(ipcEvent.readSettingData, function (event, ...data) {

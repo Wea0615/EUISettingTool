@@ -3,4 +3,5 @@ export const enum ipcEvent {
     readSettingData = "settingData",
     egretData = "egretData",
     saveButton = "saveData",
+    resetButton = "resetData",
 }

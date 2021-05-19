@@ -1,6 +1,6 @@
 {
   "name": "eui-settingtool",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Egret Editor Setting Tool",
   "author": "Willy",
   "main": "./output/main.js",
@@ -24,7 +24,7 @@
   },
   "build": {
     "appId": "com.dm.euisettingtool",
-    "productName": "EUI Setting Tool",
+    "productName": "EUISettingTool",
     "win": {
       "icon": "./icon.png"
     }
