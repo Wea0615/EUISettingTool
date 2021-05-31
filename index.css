@@ -120,3 +120,14 @@ input:checked + .slider:before {
   box-shadow: 0 5px #666;
   transform: translateY(4px);
 }
+
+.fileButton {
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #859fce;
+}

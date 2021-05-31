@@ -14,10 +14,8 @@ let dragHandler = new DragHandler();
 
 ipcRenderer.on(ipcEvent.HTMLLoaded, function (event, data) {
     dragHandler.init(document, (rootPath: string) => {
-        let settingDiv:HTMLDivElement = document.getElementById("setting") as HTMLDivElement;
-        settingDiv.style.display = "block";
-
-        ipcRenderer.send(ipcEvent.egretData, rootPath);
+        dragHandler?.hide();
+        sendRootPath(rootPath);
     });
     gameDataHandler.init(document, "game");
     themeDataHandler.init(document, "theme");
@@ -33,9 +31,25 @@ ipcRenderer.on(ipcEvent.HTMLLoaded, function (event, data) {
     resetBtn.addEventListener("click", function () {
         ipcRenderer.send(ipcEvent.resetButton);
     });
+
+    let fileBtn = document.getElementById("FileBtn");
+    fileBtn.addEventListener("click", function () {
+        ipcRenderer.send(ipcEvent.fileButton);
+    });
 });
 
 ipcRenderer.on(ipcEvent.readSettingData, function (event, ...data) {
     gameDataHandler.createOptions(data[0]);
     themeDataHandler.createOptions(data[1]);
 });
+
+ipcRenderer.on(ipcEvent.fileBtnResult, function (event, data) {
+    dragHandler?.hide();
+    sendRootPath(data);
+});
+
+function sendRootPath(rootPath: string) {
+    let settingDiv: HTMLDivElement = document.getElementById("setting") as HTMLDivElement;
+    settingDiv.style.display = "block";
+    ipcRenderer.send(ipcEvent.egretData, rootPath);
+}

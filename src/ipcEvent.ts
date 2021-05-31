@@ -4,4 +4,6 @@ export const enum ipcEvent {
     egretData = "egretData",
     saveButton = "saveData",
     resetButton = "resetData",
+    fileButton = "selectFile",
+    fileBtnResult = "fileBtnResult",
 }
