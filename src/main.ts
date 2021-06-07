@@ -35,8 +35,15 @@ function createWindow() {
     //mainWindow.webContents.openDevTools();
 }
 
-function initEvents() {
-    //接收到egret資料路徑
+function initEvents() {    
+    initSettingData();
+    initSaveBtn();
+    initResetBtn();
+    initFileBtn();
+}
+
+/** 接收到egret資料路徑 */
+function initSettingData() {
     ipcMain.on(ipcEvent.egretData, (event, arg) => {
         rootPath = arg;
 
@@ -53,9 +60,6 @@ function initEvents() {
         mainWindow.setSize(800, 750);
         mainWindow.center();
     });
-
-    initSaveBtn();
-    initResetBtn();
 }
 
 /** 儲存按鈕 */
@@ -63,30 +67,63 @@ function initSaveBtn() {
     ipcMain.on(ipcEvent.saveButton, (event, ...arg) => {
         let activeGames = arg[0];
         let activeThemes = arg[1];
-
-        //儲存egretProperties
+ 
+        //#region 儲存egretProperties
         egretSetting.eui.exmlRoot.length = 0;
 
         for (let theme of activeThemes) {
             let defaultSkin = `resource/skins/${theme.id}/`;
             egretSetting.eui.exmlRoot.push(defaultSkin);
         }
+
+        let themeSkinCnt = 0;
+        let noThemeGame: string = "";
         for (let game of activeGames) {
-            for (let theme of activeThemes) {
-                let gameSkin = `Games/${game.id}/resource/skins/${theme.id}/`;
+            themeSkinCnt = 0;
+            for (let theme of activeThemes) {         
+                let gameSkinRoot = `Games/${game.id}/resource/skins/`;
+                //檢查是否有skin資料夾
+                if (!fs.existsSync(path.join(rootPath, `/${gameSkinRoot}`))) {
+                    ++themeSkinCnt; //沒有skin也不計算
+                    continue;
+                }
+                let gameSkin = `${gameSkinRoot}${theme.id}/`;
+                //檢查是否有該主題的skin
+                if (!fs.existsSync(path.join(rootPath, `/${gameSkin}`))) {
+                    continue;
+                }
                 egretSetting.eui.exmlRoot.push(gameSkin);
+                ++themeSkinCnt;
             }
+
+            if (themeSkinCnt == 0) {
+                noThemeGame += `${game.id}的Skin沒有預設主題\n`;
+            }
+        }
+        if (noThemeGame.length > 0) {
+            dialog.showMessageBox({
+                title: "遊戲Skin沒有分主題",
+                message: noThemeGame
+            });
         }
 
         let egretData = JSON.stringify(egretSetting, null, 2); //保留空白
         fs.writeFileSync(path.join(rootPath, "./egretProperties.json"), egretData);
+        //#endregion
 
-        //儲存wingProperties
+        //#region 儲存wingProperties
         wingSetting.resourcePlugin.configs.length = 0;
         for (let theme of activeThemes) {
+            if (theme.id == "default")
+                continue;
+                
             let newThemeconfig = { configPath: `resource/${theme.id}.res.json`, relativePath: `resource/` };
             wingSetting.resourcePlugin.configs.push(newThemeconfig);
         }
+        //default最後塞入
+        let defaultThemeconfig = { configPath: `resource/default.res.json`, relativePath: `resource/` };
+        wingSetting.resourcePlugin.configs.push(defaultThemeconfig);
+
         for (let game of activeGames) {
             let gameResId = String(game.resId);
             if (gameResId && gameResId.length > 0) {
@@ -99,6 +136,7 @@ function initSaveBtn() {
         }
         let wingData = JSON.stringify(wingSetting, null, 2); //保留空白
         fs.writeFileSync(path.join(rootPath, "./wingProperties.json"), wingData);
+        //#endregion
     });
 }
 
@@ -111,6 +149,29 @@ function initResetBtn() {
     });
 }
 
+/** 選擇檔案視窗 */
+function initFileBtn() {
+    ipcMain.on(ipcEvent.fileButton, (event, arg) => {
+        let egretFileName = "egretProperties";
+        dialog.showOpenDialog({
+            filters: [{ name: egretFileName, extensions: ["json"] }],
+            properties: ["openFile"]
+        })
+        .then((result) => {
+            if (!result.canceled) {
+                let filePath = result.filePaths[0];
+                if (filePath.indexOf(egretFileName) > 0) {
+                    let rootPath = filePath.split(egretFileName)[0];
+                    event.reply(ipcEvent.fileBtnResult, rootPath);
+                }
+            }
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+    });
+}
+
 function readGameSetting() {
     if (!fs.existsSync(path.join(rootPath, "/Games"))) {
         return;
@@ -119,9 +180,10 @@ function readGameSetting() {
     gameSetting = [];
     const isDirectory = (source: string) => {
         return fs.lstatSync(source).isDirectory();
-    }
+    };
     const getDirectories = (source: string) => {
-        return fs.readdirSync(source)
+        return fs
+            .readdirSync(source)
             .map((name) => path.join(source, name))
             .filter(isDirectory);
     };
